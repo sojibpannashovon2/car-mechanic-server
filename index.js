@@ -40,6 +40,7 @@ async function run() {
         //get bangla data from mongodb
 
         app.get('/services', async (req, res) => {
+
             const cursor = serviceCollection.find();
             const result = await cursor.toArray()
             res.send(result)
@@ -54,20 +55,61 @@ async function run() {
             const options = {
 
                 // Include only the `title` and `imdb` fields in the returned document
-                projection: { title: 1, img: 1, service_id: 1, price: 1 },
+                projection: { title: 1, img: 1, price: 1 },
 
             };
             const result = await serviceCollection.findOne(query, options)
             res.send(result)
         })
 
-        //another booking data into mongodb
+
+        //get booking data from mongodb
+
+        app.get('/bookings', async (req, res) => {
+            // console.log(req.query.email);
+            let query2 = {};
+            if (req.query?.email) {
+                query2 = { email: req.query.email }
+            }
+
+            const result = await bookingCollection.find(query2).toArray();
+            res.send(result)
+        })
+
+        //another post  booking data into mongodb
 
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
             const result = await bookingCollection.insertOne(booking);
             res.send(result)
             console.log(booking);
+        })
+
+        // delete data from mongodb
+
+        app.delete("/bookings/:id", async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await bookingCollection.deleteOne(query)
+            res.send(result)
+            console.log(result);
+        })
+
+        // update single  mongodb data
+
+        app.patch('/bookings/:id', async (req, res) => {
+            const updateBooking = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    status: updateBooking.status
+                },
+            }
+            console.log(updateBooking);
+            const result = await bookingCollection.updateOne(filter, updateDoc);
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
