@@ -1,5 +1,6 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const jwt = require("jsonwebtoken")
 
 const express = require('express');
 const app = express()
@@ -37,6 +38,19 @@ async function run() {
 
         const bookingCollection = client.db("banglaSystem").collection("bookings")
 
+        // JWTS ROUTES 
+
+        app.post("/jwt", (req, res) => {
+
+            const user = req.body;
+            console.log(user);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: "1h"
+            });
+            console.log(token);
+            res.send({ token })
+        })
+
         //get bangla data from mongodb
 
         app.get('/services', async (req, res) => {
@@ -66,7 +80,7 @@ async function run() {
         //get booking data from mongodb
 
         app.get('/bookings', async (req, res) => {
-            // console.log(req.query.email);
+            console.log(req.headers);
             let query2 = {};
             if (req.query?.email) {
                 query2 = { email: req.query.email }
