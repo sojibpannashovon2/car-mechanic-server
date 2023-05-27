@@ -29,6 +29,26 @@ const client = new MongoClient(uri, {
     }
 });
 
+const verifyJWT = (req, res, next) => {
+    console.log("Verify JWT is Hitting");
+    // console.log(req.headers.authorization);
+
+    const authorization = req.headers.authorization;
+
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: "Unauthorized Access !!!" })
+    }
+    const token = authorization.split(" ")[1]
+    // console.log('Token is Verified ', token);
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+        if (error) {
+            return res.status(403).send({ error: true, message: "Unauthorized Access !!!" })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -43,11 +63,11 @@ async function run() {
         app.post("/jwt", (req, res) => {
 
             const user = req.body;
-            console.log(user);
+            // console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: "1h"
             });
-            console.log(token);
+            // console.log(token);
             res.send({ token })
         })
 
@@ -79,8 +99,14 @@ async function run() {
 
         //get booking data from mongodb
 
-        app.get('/bookings', async (req, res) => {
-            console.log(req.headers);
+        app.get('/bookings', verifyJWT, async (req, res) => {
+
+
+            // console.log("come back after decoded", req.decoded);
+
+            if (req.decoded.email !== req.query.email) {
+                return res.status(403).send({ error: 1, message: "Forbiden Access !!!" })
+            }
             let query2 = {};
             if (req.query?.email) {
                 query2 = { email: req.query.email }
