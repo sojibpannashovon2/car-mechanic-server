@@ -67,15 +67,28 @@ async function run() {
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: "1h"
             });
-            // console.log(token);
+
             res.send({ token })
         })
 
         //get bangla data from mongodb
 
         app.get('/services', async (req, res) => {
+            const sort = req.query.sort
+            const search = req.query.search
+            console.log(search);
+            const query = { title: { $regex: search, $options: "i" } };
+            // const query = { price: { $gte: 50, $lte: 200 } };
+            // const query = { price: { $lt: 100 } };
+            const options = {
+                // sort matched documents in descending order by rating
+                sort: {
+                    "price": sort === "asc" ? 1 : -1
+                },
 
-            const cursor = serviceCollection.find();
+            };
+
+            const cursor = serviceCollection.find(query, options);
             const result = await cursor.toArray()
             res.send(result)
         })
